@@ -11,6 +11,18 @@ function getAQICategory(aqi) {
   return { label: "Severe", color: "#6B7280" };
 }
 
+const LABEL_MAP = {
+  PM2_5: "PM 2.5",
+  PM10: "PM10",
+  NO2: "NO2",
+  SO2: "SO2",
+  CO: "CO",
+  O3: "O3",
+  temperature: "Temperature",
+  humidity: "Humidity",
+  wind_speed: "Wind Speed",
+};
+
 export default function App() {
   const [values, setValues] = useState({
     PM2_5: "",
@@ -32,7 +44,12 @@ export default function App() {
   useEffect(() => {
     fetch(`${API}/api/csv-rows`)
       .then((res) => res.json())
-      .then((data) => setCsvRows(data))
+      .then((data) => {
+        const cleanRows = data.filter((row) =>
+          Object.values(row).some((v) => !Number.isNaN(v) && v !== 0)
+        );
+        setCsvRows(cleanRows);
+      })
       .catch(() => setCsvRows([]));
   }, []);
 
@@ -85,8 +102,13 @@ export default function App() {
   function loadFromCSV(index) {
     const i = Number(index);
     if (Number.isNaN(i) || i < 0 || i >= csvRows.length) return;
+
     const row = csvRows[i];
-    setValues(row);
+    const safeRow = Object.fromEntries(
+      Object.keys(values).map((k) => [k, row[k] ?? ""])
+    );
+
+    setValues(safeRow);
     setResult(null);
     setDisplayValue(0);
   }
@@ -103,7 +125,7 @@ export default function App() {
         <div className="absolute w-5 h-5 bg-lime-400/40 rounded-full animate-[float_18s_linear_infinite] left-[85%] top-[94%]" />
       </div>
 
-      <div className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl shadow-lg transition-transform duration-[1000ms] hover:scale-[1.008] hover:shadow-[0_25px_70px_rgba(0,0,0,0.12)]">
+      <div className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl shadow-lg">
         <h1 className="text-3xl font-bold text-center text-emerald-700 mb-4">🌿 AQI STUDIO</h1>
 
         <div className="flex gap-2 justify-center mb-4 flex-wrap">
@@ -131,12 +153,12 @@ export default function App() {
         <form onSubmit={handlePredict} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Object.keys(values).map((k) => (
             <div key={k}>
-              <label className="text-xs text-emerald-700">{k.replace(/_/g, " ")}</label>
+              <label className="text-xs text-emerald-700">{LABEL_MAP[k]}</label>
               <input
                 type="number"
                 value={values[k]}
                 onChange={(e) => handleChange(k, e.target.value)}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-green-200 bg-white/60 backdrop-blur focus:outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-green-200 bg-white/60"
               />
             </div>
           ))}
@@ -179,7 +201,7 @@ export default function App() {
 function LegendItem({ color, label, text, active }) {
   return (
     <div
-      className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur transition-transform duration-[900ms] hover:scale-[1.04]"
+      className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur"
       style={{ outline: active ? `3px solid ${color}` : "none" }}
     >
       <div style={{ width: 36, height: 20, background: color, borderRadius: 6 }} />
