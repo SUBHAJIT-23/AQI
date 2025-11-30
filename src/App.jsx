@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+const API = import.meta.env.VITE_API_URL;
+
 function getAQICategory(aqi) {
   if (aqi <= 50) return { label: "Good", color: "#16A34A" };
   if (aqi <= 100) return { label: "Satisfactory", color: "#84CC16" };
@@ -24,6 +26,15 @@ export default function App() {
 
   const [result, setResult] = useState(null);
   const [displayValue, setDisplayValue] = useState(0);
+  const [csvRows, setCsvRows] = useState([]);
+  const [selectedRow, setSelectedRow] = useState("");
+
+  useEffect(() => {
+    fetch(`${API}/api/csv-rows`)
+      .then((res) => res.json())
+      .then((data) => setCsvRows(data))
+      .catch(() => setCsvRows([]));
+  }, []);
 
   function handleChange(k, v) {
     setValues((prev) => ({ ...prev, [k]: v }));
@@ -36,26 +47,21 @@ export default function App() {
       Object.entries(values).map(([k, val]) => [k, Number(val || 0)])
     );
 
-    const score =
-      v.PM2_5 * 0.45 +
-      v.PM10 * 0.25 +
-      v.NO2 * 0.08 +
-      v.SO2 * 0.06 +
-      v.CO * 2.5 +
-      v.O3 * 0.06 -
-      (v.wind_speed * 2 + (50 - v.humidity) * 0.2);
-
-    const predicted = Math.min(600, Math.round(Math.max(0, score)));
-    setResult(predicted);
+    fetch(`${API}/api/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(v),
+    })
+      .then((res) => res.json())
+      .then((data) => setResult(data.predictedAQI));
   }
 
   useEffect(() => {
     if (result === null) return;
     const startTime = performance.now();
-    const duration = 900;
 
     function animate(now) {
-      const progress = Math.min((now - startTime) / duration, 1);
+      const progress = Math.min((now - startTime) / 900, 1);
       setDisplayValue(Math.floor(progress * result));
       if (progress < 1) requestAnimationFrame(animate);
     }
@@ -73,6 +79,16 @@ export default function App() {
     setValues(presets[type]);
     setResult(null);
     setDisplayValue(0);
+    setSelectedRow("");
+  }
+
+  function loadFromCSV(index) {
+    const i = Number(index);
+    if (Number.isNaN(i) || i < 0 || i >= csvRows.length) return;
+    const row = csvRows[i];
+    setValues(row);
+    setResult(null);
+    setDisplayValue(0);
   }
 
   const cat = result !== null ? getAQICategory(result) : null;
@@ -87,16 +103,29 @@ export default function App() {
         <div className="absolute w-5 h-5 bg-lime-400/40 rounded-full animate-[float_18s_linear_infinite] left-[85%] top-[94%]" />
       </div>
 
-      <div className="w-full max-w-3xl rounded-3xl p-8 shadow-2xl border border-white/50 bg-white/40 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.015] hover:shadow-[0_30px_80px_rgba(0,0,0,0.15)]">
-
-        <h1 className="text-3xl font-bold text-center text-emerald-700 mb-4">
-          🌿 AQI STUDIO
-        </h1>
+      <div className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl shadow-lg transition-transform duration-[1000ms] hover:scale-[1.008] hover:shadow-[0_25px_70px_rgba(0,0,0,0.12)]">
+        <h1 className="text-3xl font-bold text-center text-emerald-700 mb-4">🌿 AQI STUDIO</h1>
 
         <div className="flex gap-2 justify-center mb-4 flex-wrap">
           <button onClick={() => loadSample("clean")} className="px-3 py-1 rounded-full bg-green-200/60">Clean</button>
           <button onClick={() => loadSample("moderate")} className="px-3 py-1 rounded-full bg-lime-200/60">Moderate</button>
           <button onClick={() => loadSample("polluted")} className="px-3 py-1 rounded-full bg-orange-200/60">Polluted</button>
+        </div>
+
+        <div className="mb-5">
+          <select
+            value={selectedRow}
+            onChange={(e) => {
+              setSelectedRow(e.target.value);
+              loadFromCSV(e.target.value);
+            }}
+            className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/60"
+          >
+            <option value="">Load From CSV</option>
+            {csvRows.map((_, i) => (
+              <option key={i} value={i}>Dataset Row {i + 1}</option>
+            ))}
+          </select>
         </div>
 
         <form onSubmit={handlePredict} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -114,43 +143,26 @@ export default function App() {
 
           <div className="sm:col-span-2 flex gap-4 mt-2 justify-center">
             <button type="submit" className="px-6 py-2 rounded-full bg-green-600 text-white shadow-lg">Predict</button>
-            <button
-              type="button"
-              onClick={() => {
-                const empty = {};
-                Object.keys(values).forEach((k) => (empty[k] = ""));
-                setValues(empty);
-                setResult(null);
-                setDisplayValue(0);
-              }}
-              className="px-6 py-2 rounded-full border bg-white/50"
-            >
-              Reset
-            </button>
+            <button type="button" onClick={() => window.location.reload()} className="px-6 py-2 rounded-full border bg-white/50">Reset</button>
           </div>
         </form>
 
         {result !== null && (
           <div className="mt-8 text-center">
             <div className="text-sm text-gray-500">Predicted AQI</div>
-            <div className="text-5xl font-extrabold tracking-wide" style={{ color: cat?.color }}>
-              {displayValue}
-            </div>
-            <div className="text-lg font-semibold mt-1" style={{ color: cat?.color }}>
-              {cat?.label}
-            </div>
+            <div className="text-5xl font-extrabold tracking-wide" style={{ color: cat?.color }}>{displayValue}</div>
+            <div className="text-lg font-semibold mt-1" style={{ color: cat?.color }}>{cat?.label}</div>
           </div>
         )}
 
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <LegendItem color="#16A34A" label="0-50" text="Good" />
-          <LegendItem color="#84CC16" label="51-100" text="Satisfactory" />
-          <LegendItem color="#F59E0B" label="101-200" text="Moderate" />
-          <LegendItem color="#F97316" label="201-300" text="Poor" />
-          <LegendItem color="#DC2626" label="301-400" text="Very Poor" />
-          <LegendItem color="#6B7280" label="401+" text="Severe" />
+          <LegendItem active={cat?.label === "Good"} color="#16A34A" label="0-50" text="Good" />
+          <LegendItem active={cat?.label === "Satisfactory"} color="#84CC16" label="51-100" text="Satisfactory" />
+          <LegendItem active={cat?.label === "Moderate"} color="#F59E0B" label="101-200" text="Moderate" />
+          <LegendItem active={cat?.label === "Poor"} color="#F97316" label="201-300" text="Poor" />
+          <LegendItem active={cat?.label === "Very Poor"} color="#DC2626" label="301-400" text="Very Poor" />
+          <LegendItem active={cat?.label === "Severe"} color="#6B7280" label="401+" text="Severe" />
         </div>
-
       </div>
 
       <style>{`
@@ -160,14 +172,16 @@ export default function App() {
           100% { transform: translateY(-120vh); opacity: 0 }
         }
       `}</style>
-
     </div>
   );
 }
 
-function LegendItem({ color, label, text }) {
+function LegendItem({ color, label, text, active }) {
   return (
-    <div className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur transition-transform hover:scale-105">
+    <div
+      className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur transition-transform duration-[900ms] hover:scale-[1.04]"
+      style={{ outline: active ? `3px solid ${color}` : "none" }}
+    >
       <div style={{ width: 36, height: 20, background: color, borderRadius: 6 }} />
       <div>
         <div className="text-sm font-semibold">{text}</div>
