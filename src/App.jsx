@@ -115,8 +115,10 @@ export default function App() {
 
   const cat = result !== null ? getAQICategory(result) : null;
 
+  const adaptiveShadow = result ? `0 0 28px ${cat.color}` : "0 0 12px rgba(0,0,0,0.1)";
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-green-50 via-lime-50 to-emerald-100 flex items-center justify-center p-4">
+    <div className={`relative min-h-screen overflow-hidden flex items-center justify-center p-4 transition-colors duration-1000 ${result === null ? "bg-gradient-to-br from-green-50 via-lime-50 to-emerald-100" : result <= 100 ? "bg-gradient-to-br from-green-100 via-emerald-100 to-green-200" : result <= 200 ? "bg-gradient-to-br from-yellow-100 via-orange-100 to-amber-200" : result <= 300 ? "bg-gradient-to-br from-orange-200 via-red-100 to-orange-300" : result <= 400 ? "bg-gradient-to-br from-red-200 via-rose-200 to-red-300" : "bg-gradient-to-br from-gray-800 via-gray-900 to-black"}`}>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute w-3 h-3 bg-green-400/40 rounded-full animate-[float_12s_linear_infinite] left-[10%] top-[90%]" />
@@ -125,7 +127,11 @@ export default function App() {
         <div className="absolute w-5 h-5 bg-lime-400/40 rounded-full animate-[float_18s_linear_infinite] left-[85%] top-[94%]" />
       </div>
 
-      <div className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl shadow-lg">
+      <div
+        className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl
+        shadow-lg transition-transform duration-[1000ms] hover:scale-[1.008]"
+        style={{ boxShadow: adaptiveShadow }}
+      >
         <h1 className="text-3xl font-bold text-center text-emerald-700 mb-4">🌿 AQI STUDIO</h1>
 
         <div className="flex gap-2 justify-center mb-4 flex-wrap">
@@ -134,56 +140,79 @@ export default function App() {
           <button onClick={() => loadSample("polluted")} className="px-3 py-1 rounded-full bg-orange-200/60">Polluted</button>
         </div>
 
-        <div className="mb-5">
-          <select
-            value={selectedRow}
-            onChange={(e) => {
-              setSelectedRow(e.target.value);
-              loadFromCSV(e.target.value);
-            }}
-            className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/60"
-          >
-            <option value="">Load From CSV</option>
-            {csvRows.map((_, i) => (
-              <option key={i} value={i}>Dataset Row {i + 1}</option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={selectedRow}
+          onChange={(e) => {
+            setSelectedRow(e.target.value);
+            loadFromCSV(e.target.value);
+          }}
+          className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/60 transition-transform duration-200 active:scale-[0.96] mb-5">
+          <option value="">Load From CSV</option>
+          {csvRows.map((_, i) => (
+            <option key={i} value={i}>Dataset Row {i + 1}</option>
+          ))}
+        </select>
 
         <form onSubmit={handlePredict} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Object.keys(values).map((k) => (
             <div key={k}>
               <label className="text-xs text-emerald-700">{LABEL_MAP[k]}</label>
-              <input
-                type="number"
-                value={values[k]}
-                onChange={(e) => handleChange(k, e.target.value)}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-green-200 bg-white/60"
-              />
+              <input type="number" value={values[k]} onChange={(e) => handleChange(k, e.target.value)} className="w-full mt-1 px-3 py-2 rounded-xl border border-green-200 bg-white/60 backdrop-blur" />
             </div>
           ))}
 
           <div className="sm:col-span-2 flex gap-4 mt-2 justify-center">
-            <button type="submit" className="px-6 py-2 rounded-full bg-green-600 text-white shadow-lg">Predict</button>
-            <button type="button" onClick={() => window.location.reload()} className="px-6 py-2 rounded-full border bg-white/50">Reset</button>
+            <button
+              type="submit"
+              className="relative overflow-hidden px-6 py-2 rounded-full bg-green-600 text-white shadow-lg transition-transform duration-300 hover:scale-[1.05] hover:shadow-[0_0_20px_#16a34a]">
+              <span className="relative z-10">Predict</span>
+              <span className="absolute inset-0 ripple-effect" />
+            </button>
+
+            <button type="button" onClick={() => window.location.reload()} className="relative overflow-hidden px-6 py-2 rounded-full border bg-white/60 transition-transform duration-300 hover:scale-[1.05] hover:shadow-[0_0_18px_rgba(0,0,0,0.25)]" >
+              <span className="relative z-10">Reset</span>
+              <span className="absolute inset-0 ripple-effect" />
+            </button>
           </div>
         </form>
 
         {result !== null && (
           <div className="mt-8 text-center">
             <div className="text-sm text-gray-500">Predicted AQI</div>
-            <div className="text-5xl font-extrabold tracking-wide" style={{ color: cat?.color }}>{displayValue}</div>
-            <div className="text-lg font-semibold mt-1" style={{ color: cat?.color }}>{cat?.label}</div>
+
+            <div
+              className="text-5xl font-extrabold tracking-wide animate-[breathGlow_2s_infinite]"
+              style={{
+                color: cat?.color,
+                textShadow: `0 0 16px ${cat?.color}`,
+              }}
+            >
+              {displayValue}
+            </div>
+
+            <div className="text-lg font-semibold mt-1" style={{ color: cat?.color }}>
+              {cat?.label}
+            </div>
           </div>
         )}
 
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <LegendItem active={cat?.label === "Good"} color="#16A34A" label="0-50" text="Good" />
-          <LegendItem active={cat?.label === "Satisfactory"} color="#84CC16" label="51-100" text="Satisfactory" />
-          <LegendItem active={cat?.label === "Moderate"} color="#F59E0B" label="101-200" text="Moderate" />
-          <LegendItem active={cat?.label === "Poor"} color="#F97316" label="201-300" text="Poor" />
-          <LegendItem active={cat?.label === "Very Poor"} color="#DC2626" label="301-400" text="Very Poor" />
-          <LegendItem active={cat?.label === "Severe"} color="#6B7280" label="401+" text="Severe" />
+          {[
+            ["Good", "#16A34A", "0-50"],
+            ["Satisfactory", "#84CC16", "51-100"],
+            ["Moderate", "#F59E0B", "101-200"],
+            ["Poor", "#F97316", "201-300"],
+            ["Very Poor", "#DC2626", "301-400"],
+            ["Severe", "#6B7280", "401+"],
+          ].map(([t, c, r]) => (
+            <LegendItem
+              key={t}
+              active={cat?.label === t}
+              color={c}
+              label={r}
+              text={t}
+            />
+          ))}
         </div>
       </div>
 
@@ -193,6 +222,44 @@ export default function App() {
           10% { opacity: 0.6 }
           100% { transform: translateY(-120vh); opacity: 0 }
         }
+
+        @keyframes breathGlow {
+          0%,100% { text-shadow: 0 0 6px currentColor; }
+          50% { text-shadow: 0 0 28px currentColor; }
+        }
+
+        @keyframes pulseGlow {
+          0%,100% { box-shadow: 0 0 6px currentColor; }
+          50% { box-shadow: 0 0 22px currentColor; }
+        }
+
+        .ripple-btn {
+          position: relative;
+          overflow: hidden;
+          padding: 8px 20px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.6);
+          transition: transform 0.3s;
+        }
+        .ripple-btn:hover {
+          transform: scale(1.05);
+        }
+        .ripple-btn::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle, rgba(255,255,255,0.5) 10%, transparent 10%);
+          opacity: 0;
+        }
+        .ripple-btn:hover::after {
+          opacity: 1;
+          animation: ripple 0.8s linear;
+        }
+
+        @keyframes ripple {
+          from { background-position: 50% 50%; }
+          to { background-position: 120% 120%; }
+        }
       `}</style>
     </div>
   );
@@ -200,9 +267,11 @@ export default function App() {
 
 function LegendItem({ color, label, text, active }) {
   return (
-    <div
-      className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur"
-      style={{ outline: active ? `3px solid ${color}` : "none" }}
+    <div className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur transition-transform duration-[900ms] hover:scale-[1.05]" style={{
+        outline: active ? `3px solid ${color}` : "none",
+        boxShadow: active ? `0 0 20px ${color}` : "none",
+        animation: active ? "pulseGlow 2s infinite" : "none",
+      }}
     >
       <div style={{ width: 36, height: 20, background: color, borderRadius: 6 }} />
       <div>
