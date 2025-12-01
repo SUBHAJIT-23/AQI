@@ -8,7 +8,7 @@ function getAQICategory(aqi) {
   if (aqi <= 200) return { label: "Moderate", color: "#F59E0B" };
   if (aqi <= 300) return { label: "Poor", color: "#F97316" };
   if (aqi <= 400) return { label: "Very Poor", color: "#DC2626" };
-  return { label: "Severe", color: "#6B7280" };
+  return { label: "Severe", color: "#7034D5" };
 }
 
 const LABEL_MAP = {
@@ -115,10 +115,10 @@ export default function App() {
 
   const cat = result !== null ? getAQICategory(result) : null;
 
-  const adaptiveShadow = result ? `0 0 28px ${cat.color}` : "0 0 12px rgba(0,0,0,0.1)";
+  const adaptiveShadow = result ? cat?.label === "Severe" ? `0 0 40px ${cat.color}aa, 0 12px 36px ${cat.color}55` : `0 0 28px ${cat.color}` : "0 0 12px rgba(0,0,0,0.1)";
 
   return (
-    <div className={`relative min-h-screen overflow-hidden flex items-center justify-center p-4 transition-colors duration-1000 ${result === null ? "bg-gradient-to-br from-green-50 via-lime-50 to-emerald-100" : result <= 100 ? "bg-gradient-to-br from-green-100 via-emerald-100 to-green-200" : result <= 200 ? "bg-gradient-to-br from-yellow-100 via-orange-100 to-amber-200" : result <= 300 ? "bg-gradient-to-br from-orange-200 via-red-100 to-orange-300" : result <= 400 ? "bg-gradient-to-br from-red-200 via-rose-200 to-red-300" : "bg-gradient-to-br from-gray-800 via-gray-900 to-black"}`}>
+    <div className={`relative min-h-screen overflow-hidden flex items-center justify-center p-4 transition-colors duration-1000 ${result === null ? "bg-gradient-to-br from-green-50 via-lime-50 to-emerald-100" : result <= 100 ? "bg-gradient-to-br from-green-100 via-emerald-100 to-green-200" : result <= 200 ? "bg-gradient-to-br from-yellow-100 via-orange-100 to-amber-200" : result <= 300 ? "bg-gradient-to-br from-orange-200 via-red-100 to-orange-300" : result <= 400 ? "bg-gradient-to-br from-red-200 via-rose-200 to-red-300" : "bg-gradient-to-br from-[#c994ec] via-[#a87ff0] to-[#c4aeee]"}`}>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute w-3 h-3 bg-green-400/40 rounded-full animate-[float_12s_linear_infinite] left-[10%] top-[90%]" />
@@ -203,7 +203,7 @@ export default function App() {
             ["Moderate", "#F59E0B", "101-200"],
             ["Poor", "#F97316", "201-300"],
             ["Very Poor", "#DC2626", "301-400"],
-            ["Severe", "#6B7280", "401+"],
+            ["Severe", "#7034D5", "401+"],
           ].map(([t, c, r]) => (
             <LegendItem
               key={t}
