@@ -172,13 +172,8 @@ export default function App() {
           <div className="mt-8 text-center">
             <div className="text-sm text-gray-500">Predicted AQI</div>
 
-            <div
-              className="text-5xl font-extrabold tracking-wide animate-[breathGlow_2s_infinite]"
-              style={{
-                color: cat?.color,
-                textShadow: `0 0 16px ${cat?.color}`,
-              }}
-            >
+            <div className="text-5xl font-extrabold tracking-wide animate-[breathGlow_2s_ease-in-out_infinite]"
+              style={{color: cat?.color, textShadow: `0 0 16px ${cat?.color}`,}}>
               {displayValue}
             </div>
 
@@ -259,12 +254,8 @@ export default function App() {
 
 function LegendItem({ color, label, text, active }) {
   return (
-    <div className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur transition-transform duration-[900ms] hover:scale-[1.05]" style={{
-        outline: active ? `3px solid ${color}` : "none",
-        boxShadow: active ? `0 0 20px ${color}` : "none",
-        animation: active ? "pulseGlow 2s infinite" : "none",
-      }}
-    >
+    <div className="flex items-center gap-3 p-2 bg-white/40 rounded-lg backdrop-blur transition-transform duration-[900ms] hover:scale-[1.05]" 
+    style={{ outline: active ? `3px solid ${color}` : "none", boxShadow: active ? `0 0 20px ${color}` : "none", animation: active ? "pulseGlow 2s infinite" : "none", }}>
       <div style={{ width: 36, height: 20, background: color, borderRadius: 6 }} />
       <div>
         <div className="text-sm font-semibold">{text}</div>
