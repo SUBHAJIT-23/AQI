@@ -45,17 +45,13 @@ export default function App() {
     fetch(`${API}/api/csv-rows`)
       .then((res) => res.json())
       .then((data) => {
-        const cleanRows = data.filter((row) =>
-          Object.values(row).some((v) => !Number.isNaN(v) && v !== 0)
-        );
+        const cleanRows = data.filter((row) => Object.values(row).some((v) => !Number.isNaN(v) && v !== 0));
         setCsvRows(cleanRows);
       })
       .catch(() => setCsvRows([]));
   }, []);
 
-  function handleChange(k, v) {
-    setValues((prev) => ({ ...prev, [k]: v }));
-  }
+  function handleChange(k, v) {setValues((prev) => ({ ...prev, [k]: v }));}
 
   function handlePredict(e) {
     e.preventDefault();
@@ -127,11 +123,7 @@ export default function App() {
         <div className="absolute w-5 h-5 bg-lime-400/40 rounded-full animate-[float_18s_linear_infinite] left-[85%] top-[94%]" />
       </div>
 
-      <div
-        className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl
-        shadow-lg transition-transform duration-[1000ms] hover:scale-[1.008]"
-        style={{ boxShadow: adaptiveShadow }}
-      >
+      <div className="w-full max-w-3xl rounded-3xl p-8 border border-white/50 bg-white/40 backdrop-blur-xl shadow-lg transition-transform duration-[2000ms] hover:scale-[1.01]" style={{ boxShadow: adaptiveShadow }}>
         <h1 className="text-3xl font-bold text-center text-emerald-700 mb-4">🌿 AQI STUDIO</h1>
 
         <div className="flex gap-2 justify-center mb-4 flex-wrap">
